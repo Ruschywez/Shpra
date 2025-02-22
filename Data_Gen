@@ -1,0 +1,9 @@
+def generate_training_data(batch_size):
+    while True:
+        images1, images2, labels = [], [], []
+        for _ in range(batch_size):
+            img1, img2, label = get_random_pair()
+            images1.append(img1)
+            images2.append(img2)
+            labels.append(label)
+        yield ([np.array(images1), np.array(images2)], np.array(labels))
