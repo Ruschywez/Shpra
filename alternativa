@@ -1,0 +1,53 @@
+import tensorflow as tf
+from tensorflow.keras.applications import ResNet50
+from tensorflow.keras.layers import Dense, Flatten, BatchNormalization, Lambda, Input
+from tensorflow.keras.models import Model, load_model
+from tensorflow.keras.optimizers import SGD
+from tensorflow.keras.losses import BinaryFocalCrossentropy
+
+def build_model(input_shape=(224, 224, 3)):
+    base_model = ResNet50(weights="imagenet", include_top=False, input_shape=input_shape)
+    base_model.trainable = False  # Замораживаем веса
+    # Входные слои
+    input1 = Input(shape=input_shape)
+    input2 = Input(shape=input_shape)
+    # Извлекаем признаки
+    features1 = base_model(input1, training=False)
+    features2 = base_model(input2, training=False)
+    # Преобразуем в векторы
+    features1 = Flatten()(features1)
+    features2 = Flatten()(features2)
+    # Абсолютная разница между признаками
+    features_diff = Lambda(lambda x: tf.abs(x[0] - x[1]))([features1, features2])
+    # Полносвязные слои с Batch Normalization
+    x = Dense(256, activation="relu")(features_diff)
+    x = BatchNormalization()(x)
+    x = Dense(128, activation="relu")(x)
+    x = BatchNormalization()(x)
+    x = Dense(1, activation="sigmoid")(x)
+    # Создаём модель
+    model = Model(inputs=[input1, input2], outputs=x)
+    # Компиляция модели
+    optimizer = SGD(learning_rate=0.01, momentum=0.9)
+    loss_fn = BinaryFocalCrossentropy()
+    model.compile(loss=loss_fn, optimizer=optimizer, metrics=["accuracy"])
+    return model
+def train_model(model, train_data, val_data, epochs=10, batch_size=32):
+    history = model.fit(
+        train_data,
+        validation_data=val_data,
+        epochs=epochs,
+        batch_size=batch_size
+    )
+    return history
+
+def save_model(model, path="model.h5"):
+    model.save(path)
+    print(f"Модель сохранена в {path}")
+
+def load_saved_model(path="model.h5"):
+    model = load_model(path)
+    print(f"Модель загружена из {path}")
+    return model
+model = build_model()
+model.summary()  # Выведет структуру модели
