@@ -1,0 +1,2 @@
+model = build_model()
+model.fit(generate_training_data(BATCH_SIZE), epochs=EPOCHS, steps_per_epoch=10)
