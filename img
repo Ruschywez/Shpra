@@ -1,0 +1,17 @@
+import cv2 import numpy as np
+
+def preprocess_image(image_path): """ Загружает изображение, изменяет его размер до 160x160, нормализует и возвращает в формате RGB.
+
+:param image_path: Путь к JPG файлу
+:return: Нормализованное изображение размером (160, 160, 3)
+"""
+img = cv2.imread(image_path)
+if img is None:
+    raise FileNotFoundError(f"Не удалось загрузить изображение: {image_path}")
+
+img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  # Преобразование BGR -> RGB
+img = cv2.resize(img, (160, 160))  # Изменение размера до 160x160
+img = img.astype(np.float32) / 255.0  # Нормализация
+
+return img
+
